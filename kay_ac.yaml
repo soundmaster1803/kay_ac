@@ -1,0 +1,91 @@
+alias: Kay AC (Tuya Google SDK)
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - climate.ac_kaigarodovs
+    id: power
+    from: null
+    to: null
+  - platform: state
+    entity_id:
+      - climate.ac_kaigarodovs
+    id: temperature
+    attribute: temperature
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  - platform: state
+    entity_id:
+      - climate.ac_kaigarodovs
+    id: fan speed
+    attribute: fan_mode
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - power
+        sequence:
+          - if:
+              - condition: state
+                entity_id: climate.ac_kaigarodovs
+                state: "off"
+                alias: If Mode is Off
+            then:
+              - service: google_assistant_sdk.send_text_command
+                data:
+                  command: turn CND off
+                alias: Google to turn OFF
+            else:
+              - service: google_assistant_sdk.send_text_command
+                data:
+                  command: turn CND on
+                alias: Google to turn ON
+                enabled: true
+              - service: google_assistant_sdk.send_text_command
+                data:
+                  command: >-
+                    set CND to
+                    {{states('climate.ac_kaigarodovs')|replace("fan_only", "fan
+                    only") }}
+                alias: Google to set mode
+              - service: google_assistant_sdk.send_text_command
+                data:
+                  command: >-
+                    set temperature CND to
+                    {{state_attr('climate.ac_kaigarodovs','temperature')|round()}}
+                    degrees
+                alias: Google to set temperature
+              - service: google_assistant_sdk.send_text_command
+                data:
+                  command: >-
+                    set CND speed to
+                    {{state_attr('climate.ac_kaigarodovs','fan_mode')}}
+                alias: Google to set fan speed
+            alias: On or Off
+      - conditions:
+          - condition: trigger
+            id:
+              - temperature
+        sequence:
+          - service: google_assistant_sdk.send_text_command
+            data:
+              command: >-
+                set CND temperature to
+                {{state_attr('climate.ac_kaigarodovs','temperature')|round()}}
+            alias: Google to set temperature
+      - conditions:
+          - condition: trigger
+            id:
+              - fan speed
+        sequence:
+          - service: google_assistant_sdk.send_text_command
+            data:
+              command: >-
+                set CND speed to
+                {{state_attr('climate.ac_kaigarodovs','fan_mode')}}
+            alias: Google to set fan speed
+mode: single
